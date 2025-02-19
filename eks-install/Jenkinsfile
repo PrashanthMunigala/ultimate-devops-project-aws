@@ -1,36 +1,42 @@
-pipeline{
+pipeline {
     agent any
-     parameters {
-       choice(name: 'ACTION', choices: ['paln', 'apply', 'destroy'], description: 'select the action') 
-       string(name: 'build backend', defaultValue: 'init', description: 'terraform initialize') 
-       string(name: 'backend terraform apply', defaultValue: 'apply', description: 'terraform apply')
-       string(name: 'backend terraform destroy', defaultValue: 'destroy', description: 'terraform destroy')
-     }
-    stages{
-        stage('git clone') { 
+    parameters {
+        choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Select the action')
+        string(name: 'BUILD_BACKEND', defaultValue: 'init', description: 'Terraform initialize')
+        string(name: 'BACKEND_TERRAFORM_APPLY', defaultValue: 'apply', description: 'Terraform apply')
+        string(name: 'BACKEND_TERRAFORM_DESTROY', defaultValue: 'destroy', description: 'Terraform destroy')
+    }
+    stages {
+        stage('git clone') {
             steps {
-                checkout scmGit(branches: [[name: '*/main]], extensions: [], userRemoteConfigs: [['url: 'https://github.com/PrashanthMunigala/ultimate-devops-project-aws.git']])
-            } 
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/PrashanthMunigala/ultimate-devops-project-aws.git']])
             }
         }
         stage('build backend') {
             steps {
-                dir('eksinstall/backend')
-                sh 'terraform init'
+                dir('eksinstall/backend') {
+                    sh 'terraform init'
+                }
             }
         }
         stage('backend terraform apply') {
-            when {ACTION 'apply'}
+            when {
+                expression { return params.ACTION == 'apply' }
+            }
             steps {
-                dir('eksinstall/backend')
-                sh 'terraform apply'
+                dir('eksinstall/backend') {
+                    sh 'terraform apply'
+                }
             }
         }
-         stage('backend terraform destroy') {
-            when {ACTION 'destroy'}
+        stage('backend terraform destroy') {
+            when {
+                expression { return params.ACTION == 'destroy' }
+            }
             steps {
-                dir('eksinstall/backend')
-                sh 'terraform destroy'
+                dir('eksinstall/backend') {
+                    sh 'terraform destroy'
+                }
             }
         }
         stage('Wait') {
@@ -42,15 +48,16 @@ pipeline{
             }
         }
         stage('Terraform Init') {
-           steps {
-              dir('eksinstall') {
-                 sh 'terraform init'
-              }
-
-           }
+            steps {
+                dir('eksinstall') {
+                    sh 'terraform init'
+                }
+            }
         }
         stage('terraform plan') {
-            when {ACTION 'plan'}
+            when {
+                expression { return params.ACTION == 'plan' }
+            }
             steps {
                 dir('eksinstall') {
                     sh 'terraform plan'
@@ -65,20 +72,32 @@ pipeline{
             }
         }
         stage('Terraform apply') {
-            when {ACTION 'apply'}
+            when {
+                expression { return params.ACTION == 'apply' }
+            }
             steps {
-                dir ('eksinstall') {
-                  sh 'terraform apply -auto-approve'
+                dir('eksinstall') {
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
         stage('terraform destroy') {
-            when {ACTION 'destroy'}
+            when {
+                expression { return params.ACTION == 'destroy' }
+            }
             steps {
-                dir ('eksinstall') {
+                dir('eksinstall') {
                     sh 'terraform destroy -auto-approve'
                 }
             }
         }
-
+    }
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
 }
