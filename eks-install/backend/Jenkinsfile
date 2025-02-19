@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        PATH = "$PATH:/usr/bin" // Update this path to the location of your terraform binary
+    }
     parameters {
         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select the action')
     }
