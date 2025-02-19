@@ -2,9 +2,6 @@ pipeline{
     agent any
      parameters {
        { choice(name: 'ACTION', choices: ['paln', 'apply', 'destroy'], description: '') }
-       { string(name: 'build backend', defaultValue: 'init', description: 'terraform initialize') }
-       { string(name: 'backend terraform apply', defaultValue: 'apply', description: 'terraform apply') }
-       { string(name: 'backend terraform destroy', defaultValue: 'destroy', description: 'terraform destroy') }
     }
     stages{
         stage('git clone') { 
