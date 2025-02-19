@@ -7,7 +7,6 @@ pipeline {
         stage('git clone') {
             steps {
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/PrashanthMunigala/ultimate-devops-project-aws.git']])
-               }
             }
         }
         stage('build backend') {
@@ -17,25 +16,20 @@ pipeline {
                 }
             }
         }
-        stage('backend terraform apply') {
-            when {
-                expression { return params.ACTION == 'apply' }
-            }
+        stage('backend terraform apply or destroy') {
             steps {
-                dir('eksinstall/backend') {
-                    sh 'terraform apply'
+                script {
+                    if (params.ACTION == 'apply') {
+                        dir('eksinstall/backend') {
+                            sh 'terraform apply'
+                        }
+                    } else if (params.ACTION == 'destroy') {
+                        dir('eksinstall/backend') {
+                            sh 'terraform destroy'
+                        }
+                    }
                 }
             }
         }
-        stage('backend terraform destroy') {
-            when {
-                expression { return params.ACTION == 'destroy' }
-            }
-            steps {
-                dir('eksinstall/backend') {
-                    sh 'terraform destroy'
-                }
-            }
-        }
-
+    }
 }
